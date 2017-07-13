@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DCC104 - Exercício 4</title>
+    <script src="Sprite.js" type="text/javascript"></script>
+    <script src="Level.js" type="text/javascript"></script>
+	<script src="SpriteTiro.js" type="text/javascript"></script>
+	<script src="SpriteInimigo.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <h1>DCC104 - Exercício 4</h1>
+    <canvas height="400px" width="400px" style="background-image: url('fundo.jpg'); cursor:url('icone_mira.png') 16 16, auto;"></canvas>
+
+    <script type="text/javascript">
+      var eCanvas = document.getElementsByTagName('canvas')[0];
+      var ctx = eCanvas.getContext("2d");
+
+      var fps = 60;
+      var atual = new Date();
+      var anterior = new Date();
+      var dt = 1/fps;
+		
+	  var pontos = 0;
+	  var perdeu = false;
+	  var torresAtingidas = 0;
+	  
+      var azul = new Sprite();
+      var acelerandoX = false;
+      var acelerandoY = false;
+      var level = new Level();
+      level.init();
+
+      desenha();
+
+      function desenha(){
+        requestAnimationFrame(desenha);
+        atual = new Date();
+        dt = (atual - anterior)/1000;
+        ctx.clearRect(0,0,eCanvas.width,eCanvas.height);
+        
+        //level.perseguir(azul, dt);
+
+        azul.mover(dt);
+        level.mover(dt);
+		
+		level.colidiuComPredios(level.predios, function(inimigo, alvo){
+			level.inimigos.splice(inimigo,1);
+			if(!alvo.atingido){
+				torresAtingidas++;
+			}
+			alvo.atingido = true;
+			alvo.color = "black";
+        });
+		
+		if(torresAtingidas == 4){
+			perdeu = true;
+		}
+		
+        level.colidiuComAtirador(azul, function(inimigo, alvo){
+          inimigo.color = "yellow";
+        });
+		
+		level.colidiuComTiro(azul.tiros, function(inimigo, alvo){
+			level.inimigos.splice(inimigo,1);
+			azul.tiros.splice(alvo,1);
+			pontos++;
+        });
+
+        azul.desenhar(ctx);
+        level.desenhar(ctx);
+
+		if(perdeu){
+			ctx.fillStyle = "#FFF";
+			ctx.font="30px Arial";
+			ctx.fillText("Você perdeu", 127, 200);
+			ctx.font="13px Arial";
+			ctx.fillText("ENTER - Iniciar Jogo", 150, 230);
+		}
+		
+		ctx.fillStyle = "#FFF";
+		ctx.font="15px Arial";
+		ctx.fillText("Pontos: " + pontos, 300, 25);
+		
+        anterior = atual;
+      }
+	  
+	  addEventListener("click",function(e){
+		//console.log(e.x + " " + e.y)
+		//console.log(e.layerX + " " + e.layerY)
+		if (e.layerX <= 400 && e.layerY <= 400 && !perdeu)
+			azul.atirar(e.x, e.y);
+      });
+	  
+	  addEventListener("keydown",function(e){
+        switch (e.keyCode) {
+		  case 13:
+			if(perdeu){
+				level = new Level();
+				level.init();
+				perdeu = false;
+				pontos = 0;
+				torresAtingidas = 0;
+			}
+            break;
+          default:
+        }
+      })
+	  
+    </script>
+
+  </body>
+</html>
